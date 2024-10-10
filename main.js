@@ -32,6 +32,7 @@ let init = async () => {
     await channel.join().catch(console.error);
 
     channel.on('MemberJoined', handleUserJoined);
+    client.on('MessageFromPeer', handleMessageFromPeer);
 
 
     let devices = await navigator.mediaDevices.enumerateDevices();
@@ -57,15 +58,20 @@ let init = async () => {
         document.getElementById('localAudio').srcObject = localStream;
     }
     // document.getElementById('localVideo').srcObject = localStream;
-
-    createOffer();
 };
 
 let handleUserJoined = async (memberId) => {
     console.log("User joined:", memberId);
+    createOffer(memberId);
 }
 
-let createOffer = async () => {
+let handleMessageFromPeer = async (message, memberId) => {
+    message = JSON.parse(message.text);
+    console.log("Message from peer:", message, memberId);
+};
+
+
+let createOffer = async (memberId) => {
     // create RTCPeerConnection
     peerConnection = new RTCPeerConnection();
     // peerConnection.addStream(localStream);
@@ -87,6 +93,9 @@ let createOffer = async () => {
     peerConnection.onicecandidate = (event) => {
         if(event.candidate) {
             console.log("ICE candidate:", event.candidate);
+            client.sendMessageToPeer({text: JSON.stringify({'type': 'candidate', 'candidate': event.candidate})}, memberId).then(sendResult => {
+                console.log("Message sent:", sendResult);
+            }).catch(console.error);
         }
     }
     
@@ -96,7 +105,10 @@ let createOffer = async () => {
     let offer = await peerConnection.createOffer(servers);
     await peerConnection.setLocalDescription(offer);
     console.log("Offer:", offer);
-    // return offer;
+    
+    client.sendMessageToPeer({text: JSON.stringify({'type': 'offer', 'offer': offer})}, memberId).then(sendResult => {
+        console.log("Message sent:", sendResult);
+    }).catch(console.error);
 
     
 
