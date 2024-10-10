@@ -41,6 +41,7 @@ let init = async () => {
 let getLocalStream = async () => {
     // get user media
     let devices = await navigator.mediaDevices.enumerateDevices();
+    console.log("Devices:", devices);
     let audioInputDevices = devices.filter((device) => device.kind === "audioinput");
     let videoInputDevices = devices.filter((device) => device.kind === "videoinput");
 
@@ -52,8 +53,8 @@ let getLocalStream = async () => {
         constraints.audio = true;
     }
     if (videoInputDevices.length > 0) {
-        videoInputDevices[0].deviceId !== '' ? constraints.video = true : constraints.video = false;
-        // constraints.video = true;
+        // videoInputDevices[0].deviceId !== '' ? constraints.video = true : constraints.video = false;
+        constraints.video = true;
     }
     
     localStream = await navigator.mediaDevices.getUserMedia(constraints).catch(console.error);
@@ -74,6 +75,16 @@ let handleUserJoined = async (memberId) => {
 let handleMessageFromPeer = async (message, memberId) => {
     message = JSON.parse(message.text);
     console.log("Message from peer:", message, memberId);
+
+    if(message.type === 'offer') {
+        await createAnswer(memberId, message.offer);
+    } else if(message.type === 'answer') {
+        await addAnswer(message.answer);
+    } else if(message.type === 'candidate') {
+        if(peerConnection) {
+            await peerConnection.addIceCandidate(message.candidate);
+        }
+    }
 };
 
 let createPeerConnection = async (memberId) => {
@@ -137,6 +148,14 @@ let createAnswer = async (memberId, offer) => {
     client.sendMessageToPeer({text: JSON.stringify({'type': 'answer', 'answer': answer})}, memberId).then(sendResult => {
         console.log("Message sent:", sendResult);
     }).catch(console.error);
+}
+
+let addAnswer = async (answer) => {
+    if(!peerConnection.currentRemoteDescription) {
+        await peerConnection.setRemoteDescription(answer);
+        console.log("Answer added:", answer);
+    }
+        
 }
 
 // createOffer();
