@@ -122,9 +122,21 @@ let createOffer = async (memberId) => {
     client.sendMessageToPeer({text: JSON.stringify({'type': 'offer', 'offer': offer})}, memberId).then(sendResult => {
         console.log("Message sent:", sendResult);
     }).catch(console.error);
+}
 
-    
+let createAnswer = async (memberId, offer) => {
+    // create peer connection
+    await createPeerConnection(memberId);
 
+    // create answer
+    await peerConnection.setRemoteDescription(offer);
+    let answer = await peerConnection.createAnswer();
+    await peerConnection.setLocalDescription(answer);
+    console.log("Answer:", answer);
+
+    client.sendMessageToPeer({text: JSON.stringify({'type': 'answer', 'answer': answer})}, memberId).then(sendResult => {
+        console.log("Message sent:", sendResult);
+    }).catch(console.error);
 }
 
 // createOffer();
