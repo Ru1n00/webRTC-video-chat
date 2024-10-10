@@ -35,6 +35,11 @@ let init = async () => {
     client.on('MessageFromPeer', handleMessageFromPeer);
 
 
+    getLocalStream();
+};
+
+let getLocalStream = async () => {
+    // get user media
     let devices = await navigator.mediaDevices.enumerateDevices();
     let audioInputDevices = devices.filter((device) => device.kind === "audioinput");
     let videoInputDevices = devices.filter((device) => device.kind === "videoinput");
@@ -47,7 +52,8 @@ let init = async () => {
         constraints.audio = true;
     }
     if (videoInputDevices.length > 0) {
-        constraints.video = true;
+        videoInputDevices[0].deviceId !== '' ? constraints.video = true : constraints.video = false;
+        // constraints.video = true;
     }
     
     localStream = await navigator.mediaDevices.getUserMedia(constraints).catch(console.error);
@@ -81,6 +87,9 @@ let createOffer = async (memberId) => {
     document.getElementById('remoteVideo').srcObject = remoteStream;
 
     // add localStream to peerConnection
+    if(!localStream) {
+        await getLocalStream();
+    }
     localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
     // add tracks to remoteStream
