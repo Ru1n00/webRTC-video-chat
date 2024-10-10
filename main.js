@@ -76,8 +76,7 @@ let handleMessageFromPeer = async (message, memberId) => {
     console.log("Message from peer:", message, memberId);
 };
 
-
-let createOffer = async (memberId) => {
+let createPeerConnection = async (memberId) => {
     // create RTCPeerConnection
     peerConnection = new RTCPeerConnection();
     // peerConnection.addStream(localStream);
@@ -107,8 +106,13 @@ let createOffer = async (memberId) => {
             }).catch(console.error);
         }
     }
-    
+    console.log("peerConnection:", peerConnection);
+}
 
+
+let createOffer = async (memberId) => {
+    // create peer connection
+    await createPeerConnection(memberId);
 
     // create offer
     let offer = await peerConnection.createOffer(servers);
@@ -121,7 +125,6 @@ let createOffer = async (memberId) => {
 
     
 
-    console.log("peerConnection:", peerConnection);
 }
 
 // createOffer();
